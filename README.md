@@ -123,6 +123,14 @@ docker tag debian-cobol:5.2 <seu-usuario-dockerhub>/debian-cobol:5.2
 docker push <seu-usuario-dockerhub>/debian-cobol:5.2
 ```
 
+Imagem publicada em: **`perlporter/debian-cobol`** (tags `5.2` e `latest`),
+repositório **privado**. Para outra pessoa usar, ela precisa:
+
+1. Ser convidada como colaboradora no repositório (hub.docker.com →
+   `perlporter/debian-cobol` → Settings → Collaborators);
+2. Rodar `docker login` com a conta dela;
+3. `docker pull perlporter/debian-cobol:5.2`.
+
 Cada pessoa que rodar a imagem (você e seu amigo) ativa sua **própria**
 licença localmente com `activate`, do jeito descrito acima — a licença
 nunca viaja dentro da imagem.
