@@ -1,0 +1,15 @@
+# Mídia de instalação original do fornecedor (proprietária, não versionar)
+files/
+
+# Licenças e códigos de ativação (segredos, nunca versionar nem publicar)
+*.alc
+*.txt
+!README*.txt
+license/
+
+# Artefatos de build
+*.tar
+*.log
+*.acu
+*.int
+*.alc.log
