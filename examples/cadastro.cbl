@@ -27,9 +27,7 @@
            05  LINE 3  COL 10 VALUE "   CADASTRO DE CONTATOS".
            05  LINE 4  COL 10 VALUE "==============================".
            05  LINE 6  COL 10 VALUE "Nome ....: ".
-           05  LINE 6  COL 21 PIC X(30) USING WS-NOME.
            05  LINE 7  COL 10 VALUE "Telefone : ".
-           05  LINE 7  COL 21 PIC X(15) USING WS-TELEFONE.
            05  LINE 9  COL 10 VALUE "==============================".
 
        PROCEDURE DIVISION.
@@ -40,7 +38,8 @@
                MOVE SPACES TO WS-NOME
                MOVE SPACES TO WS-TELEFONE
                DISPLAY TELA-CADASTRO
-               ACCEPT TELA-CADASTRO
+               ACCEPT WS-NOME LINE 6 COLUMN 21
+               ACCEPT WS-TELEFONE LINE 7 COLUMN 21
 
                MOVE WS-NOME     TO REG-NOME
                MOVE WS-TELEFONE TO REG-TELEFONE
