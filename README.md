@@ -4,6 +4,9 @@ Imagem Docker com **AcuCOBOL-GT 5.2** (Runtime + AcuShare + compilador `ccbl`)
 rodando sobre **Debian 3.1 "Sarge" (i386)**, capaz de compilar e executar
 programas `.cbl` dentro do container.
 
+Código-fonte deste repositório: https://github.com/perlporter/acucobol-setup
+(público — sem segredos versionados, ver seção de Licenciamento abaixo).
+
 ## Por que Debian Sarge?
 
 Os binários do AcuCOBOL-GT 5.2 (build de 2003, extraídos de
@@ -111,6 +114,92 @@ O `acushare` é iniciado automaticamente pelo entrypoint antes de qualquer
 `compile`/`run`/`build-run`/`shell` (idempotente — se já estiver rodando,
 não faz nada).
 
+## Exemplos incluídos (`examples/`)
+
+| Arquivo | O que mostra |
+|---|---|
+| `hello.cbl` | Programa mínimo, só `DISPLAY` |
+| `soma.cbl` | `WORKING-STORAGE`, `ADD`, `PERFORM VARYING` |
+| `cadastro.cbl` | Arquivo **sequencial** (`LINE SEQUENTIAL`) com telinha (`SCREEN SECTION`): cadastra nome+telefone em `cadastro.dat`, acrescentando a cada execução |
+| `cadastro_isam.cbl` | Mesmo cadastro, mas em arquivo **indexado** (Vision/ISAM, `ORGANIZATION IS INDEXED`), com menu: cadastrar, consultar por nome, sair. Gera `cadastro.dat` (dados) + `cadastro.vix` (índice) |
+
+Detalhes técnicos que valeram a pena guardar ao escrever esses exemplos com
+esse compilador de 2003:
+
+- **Linhas de código-fonte não podem passar de 72 colunas** (formato fixo
+  do COBOL). Passar disso faz o compilador "perder" a aspa de fechamento
+  de string literal e o erro reportado aponta pro fim do arquivo, não pra
+  linha real do problema — se aparecer `Missing closing quote` apontando
+  pro finalzinho do programa, o culpado quase sempre é uma linha comprida
+  demais mais acima.
+- **`SELECT OPTIONAL` é obrigatório** para abrir (`OPEN EXTEND`/`OPEN I-O`)
+  um arquivo que ainda não existe sem cair na tela de erro fatal do
+  runtime — mesmo declarando `FILE STATUS`. Sem `OPTIONAL`, arquivo
+  ausente é sempre erro fatal.
+- **Não aceita `NOT INVALID KEY`** (só `INVALID KEY`) nem os terminadores
+  de escopo `END-WRITE`/`END-READ` (COBOL-85) — usa-se o estilo COBOL-74,
+  terminando a cláusula com ponto e checando sucesso via `FILE STATUS`.
+- **`ACCEPT` de um grupo de tela inteiro** (`ACCEPT TELA-X`) deixa o Enter
+  fechar o formulário inteiro em vez de avançar de campo em campo — usar
+  `ACCEPT campo LINE n COLUMN n` individual por campo é mais previsível.
+- **Telas com `ACCEPT`/`SCREEN SECTION` exigem terminal interativo real**
+  (`-it`, digitado à mão). Não dá para simular via `stdin` em pipe — o
+  programa entra num loop redesenhando a tela sem nunca consumir a
+  entrada.
+
+## `vutil` — utilitário de arquivos Vision (indexados)
+
+Não precisa de licença nem do `acushare` — funciona direto:
+
+```bash
+docker run --rm -v "$PWD/examples":/work debian-cobol:5.2 vutil -info cadastro.dat
+docker run --rm -v "$PWD/examples":/work debian-cobol:5.2 vutil -check cadastro.dat
+docker run --rm -v "$PWD/examples":/work debian-cobol:5.2 vutil -rebuild cadastro.dat
+```
+
+`-info` mostra número de registros, tamanho de cada arquivo físico
+(`.dat` e `.vix`) e número de chaves. Rode `vutil` sem argumentos pra ver
+todas as opções (`-check`, `-rebuild`, `-size`, `-tree`, `-load`/`-unload`
+para exportar/importar registros, etc.).
+
+## Rodando no Windows (Docker Desktop)
+
+Testado de verdade num PC Windows/x86_64 — roda **nativo, sem QEMU**
+(diferente do Mac Apple Silicon). Duas pegadinhas específicas do Windows:
+
+1. **Quebra de linha (CRLF).** O Git no Windows costuma converter LF em
+   CRLF ao clonar (`core.autocrlf`), e esse compilador não tolera `\r` no
+   meio da linha (erro tipo `PROCEDURE expected, ?? found` logo nas
+   primeiras linhas). O `.gitattributes` deste repositório já força
+   `eol=lf` nos `.cbl`/`.sh`/Dockerfile — se ainda assim der esse erro,
+   clone o repositório de novo do zero (o `.gitattributes` só vale para
+   checkouts feitos depois dele existir).
+
+2. **Arquivo indexado (Vision/ISAM) não funciona em pasta comum do
+   Windows.** Programas com `ORGANIZATION IS INDEXED` (como o
+   `cadastro_isam.cbl`) usam travamento de arquivo (file locking) mesmo
+   rodando sozinho, e o compartilhamento de pasta do Docker Desktop pro
+   Windows (bind mount tipo `-v "${PWD}/examples:/work"`) não sustenta
+   esse locking direito — dá erro `File error 93` (recurso indisponível).
+   Solução: rodar de dentro do **WSL2** (Debian ou Ubuntu), clonando o
+   repositório na pasta home do próprio Linux (`~/acucobol-setup`, **não**
+   em `/mnt/c/...`). Arquivos **sequenciais** (`LINE SEQUENTIAL`, como
+   `cadastro.cbl`) funcionam numa boa em pasta comum do Windows — só o
+   indexado que precisa do WSL2.
+
+   Um problema parecido (`stat(): Value too large for defined data type`)
+   também aparece ao **ativar a licença** (`activate`) apontando pra uma
+   pasta comum do Windows — mesma causa raiz (bind mount). Resolvido
+   usando um **volume nomeado do Docker** em vez de pasta do host:
+
+   ```powershell
+   docker volume create acucobol-license
+   docker run --rm -it -v acucobol-license:/opt/acucobol/license debian-cobol:5.2 activate
+   ```
+
+   E depois usar esse mesmo volume nomeado (em vez de `-v "$PWD/license":...`)
+   em todos os comandos.
+
 ## Compartilhando com outra pessoa (Docker Hub)
 
 Como os binários são software comercial da Acucorp/Micro Focus, publique
@@ -142,9 +231,12 @@ nunca viaja dentro da imagem.
 ├── docker/
 │   ├── Dockerfile        # build multi-stage: extrai o Runtime+ccbl do
 │   │                       linux_22.tar e monta a imagem final
-│   └── entrypoint.sh     # activate / compile / run / build-run / shell
+│   └── entrypoint.sh     # activate / compile / run / build-run / vutil / shell
 ├── examples/
-│   └── hello.cbl         # programa de exemplo
+│   ├── hello.cbl         # programa mínimo
+│   ├── soma.cbl          # WORKING-STORAGE, ADD, PERFORM VARYING
+│   ├── cadastro.cbl      # telinha + arquivo sequencial
+│   └── cadastro_isam.cbl # telinha + arquivo indexado (Vision/ISAM)
 ├── files/                # mídia de instalação original (não versionado)
 └── license/              # .alc ativados localmente (não versionado)
 ```

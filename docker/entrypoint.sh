@@ -12,7 +12,13 @@ Uso:
   <imagem> run <programa> [args]        Executa um programa já compilado com o runcbl
   <imagem> build-run <arquivo.cbl>      Compila e executa em seguida
   <imagem> acushare [opts]              Inicia o daemon acushare
+  <imagem> vutil [opts] arquivo         Utilitário de arquivos Vision (indexados)
   <imagem> shell                        Abre um shell dentro da imagem
+
+Exemplos de vutil (não precisa de licença nem de acushare):
+  <imagem> vutil -info cadastro.dat     Estatísticas do arquivo (registros, tamanho, chaves)
+  <imagem> vutil -check cadastro.dat    Verifica integridade
+  <imagem> vutil -rebuild cadastro.dat  Reconstrói o índice
 
 Licenças (.alc) ficam em /opt/acucobol/license — monte essa pasta como
 volume para persistir a ativação entre execuções, ex:
@@ -61,6 +67,10 @@ case "$cmd" in
         ;;
     acushare)
         exec acushare "$@"
+        ;;
+    vutil)
+        [ -n "$1" ] || { usage; exit 1; }
+        exec vutil "$@"
         ;;
     shell|sh|bash)
         ensure_acushare
