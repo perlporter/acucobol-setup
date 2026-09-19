@@ -1,0 +1,8 @@
+# O compilador AcuCOBOL-GT 5.2 é de 2003 e não tolera CR (\r) no meio da
+# linha. Força LF sempre, mesmo em checkout no Windows (onde o Git costuma
+# converter para CRLF por padrão via core.autocrlf).
+*.cbl     text eol=lf
+*.cpy     text eol=lf
+*.sh      text eol=lf
+Dockerfile text eol=lf
+*.md      text eol=lf
