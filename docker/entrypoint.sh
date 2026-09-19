@@ -29,7 +29,9 @@ EOF
 ensure_acushare() {
     acushare -start >/tmp/acushare.log 2>&1 || true
     # dá um tempo para o daemon ficar pronto para atender checkouts de licença
-    sleep 5
+    # (generoso de propósito: sob QEMU/binfmt em host ARM o IPC do acushare
+    # é sensível a timing; em host x86_64 nativo isso é quase instantâneo)
+    sleep 10
 }
 
 cmd="${1:-help}"

@@ -42,7 +42,7 @@ ENV COBDIR=/opt/acucobol \
 COPY --from=extract /opt/acucobol /opt/acucobol
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh && \
-    printf '\n# aumenta a tolerancia de espera pelo acushare (util sob emulacao QEMU)\nACUSHARE_TIMEOUT\t30\n' >> /opt/acucobol/etc/cblconfig
+    printf '\n# aumenta a tolerancia de espera pelo acushare (util sob emulacao QEMU)\nACUSHARE_TIMEOUT\t60\n' >> /opt/acucobol/etc/cblconfig
 
 WORKDIR /work
 VOLUME ["/opt/acucobol/license"]
