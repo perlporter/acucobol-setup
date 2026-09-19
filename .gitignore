@@ -14,3 +14,5 @@ license/
 *.int
 *.alc.log
 examples/*.dat
+*.vix
+*.idx
