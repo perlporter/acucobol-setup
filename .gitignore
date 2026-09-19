@@ -13,3 +13,4 @@ license/
 *.acu
 *.int
 *.alc.log
+examples/*.dat
